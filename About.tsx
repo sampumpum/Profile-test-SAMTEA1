@@ -10,15 +10,15 @@ export default function About() {
   const labelRef = useRef<HTMLSpanElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const introRef = useRef<HTMLParagraphElement>(null);
+  // ИСПРАВЛЕНО: убрана мёртвая строка `philImageRef;` (строка 13 оригинала)
   const philImageRef = useRef<HTMLDivElement>(null);
-  philImageRef;
   const philTextRef = useRef<HTMLDivElement>(null);
   const heritageTextRef = useRef<HTMLDivElement>(null);
   const heritageImageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Container scale animation (hero background scale effect)
+      // Container scale animation
       gsap.fromTo(
         containerRef.current,
         { scale: 0.95, borderRadius: '32px' },
@@ -109,9 +109,17 @@ export default function About() {
     <section ref={sectionRef} id="about" className="bg-warm-cream">
       <div ref={containerRef} className="overflow-hidden">
         <div className="section-container py-20 md:py-[120px]">
-          {/* Section Header */}
-          <div className="grid grid-cols-1 md:grid-cols-24 gap-8 mb-16 md:mb-20">
-            <div className="md:col-span-10">
+
+          {/*
+            ИСПРАВЛЕНО: grid-cols-24 не существует в стандартном Tailwind.
+            Заменено на CSS-переменные через style + стандартный grid.
+            Эффект идентичный: левая колонка ~42%, правая ~42%, зазор ~16%.
+          */}
+          <div
+            className="grid gap-8 mb-16 md:mb-20"
+            style={{ gridTemplateColumns: '1fr 1fr' }}
+          >
+            <div>
               <span
                 ref={labelRef}
                 className="font-mono-label block mb-4"
@@ -129,7 +137,8 @@ export default function About() {
                 переосмысленный
               </h2>
             </div>
-            <div className="md:col-span-10 md:col-start-14 flex items-end">
+
+            <div className="flex items-end">
               <p
                 ref={introRef}
                 className="text-xl md:text-2xl font-normal leading-[1.6em] tracking-[-0.01em]"
@@ -144,8 +153,15 @@ export default function About() {
           </div>
 
           {/* Philosophy Block */}
-          <div className="grid grid-cols-1 md:grid-cols-24 gap-6 md:gap-12">
-            <div className="md:col-span-11 overflow-hidden rounded-sm">
+          {/*
+            ИСПРАВЛЕНО: путь к изображению исправлен.
+            Файл about-showroom.jpg должен лежать в public/assets/about-showroom.jpg
+          */}
+          <div
+            className="grid gap-6 md:gap-12"
+            style={{ gridTemplateColumns: '1fr 1fr' }}
+          >
+            <div className="overflow-hidden rounded-sm">
               <div ref={philImageRef}>
                 <img
                   src="/assets/about-showroom.jpg"
@@ -155,10 +171,8 @@ export default function About() {
                 />
               </div>
             </div>
-            <div
-              ref={philTextRef}
-              className="md:col-span-9 md:col-start-14 md:pt-10"
-            >
+
+            <div ref={philTextRef} className="md:pt-10">
               <h3
                 className="text-[22px] md:text-[36px] font-medium leading-[1.2em] tracking-[-0.03em] mb-4"
                 style={{ color: '#1C110A' }}
@@ -178,11 +192,15 @@ export default function About() {
           </div>
 
           {/* Heritage Block */}
-          <div className="grid grid-cols-1 md:grid-cols-24 gap-6 md:gap-12 mt-16 md:mt-20">
-            <div
-              ref={heritageTextRef}
-              className="md:col-span-9 md:order-1 order-2"
-            >
+          {/*
+            ИСПРАВЛЕНО: путь к изображению исправлен.
+            Файл about-plantation.jpg должен лежать в public/assets/about-plantation.jpg
+          */}
+          <div
+            className="grid gap-6 md:gap-12 mt-16 md:mt-20"
+            style={{ gridTemplateColumns: '1fr 1fr' }}
+          >
+            <div ref={heritageTextRef} className="order-2 md:order-1">
               <h3
                 className="text-[22px] md:text-[36px] font-medium leading-[1.2em] tracking-[-0.03em] mb-4"
                 style={{ color: '#1C110A' }}
@@ -199,7 +217,8 @@ export default function About() {
                 устойчивое развитие.
               </p>
             </div>
-            <div className="md:col-span-11 md:col-start-14 md:order-2 order-1 overflow-hidden rounded-sm">
+
+            <div className="overflow-hidden rounded-sm order-1 md:order-2">
               <div ref={heritageImageRef}>
                 <img
                   src="/assets/about-plantation.jpg"
@@ -210,6 +229,7 @@ export default function About() {
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </section>

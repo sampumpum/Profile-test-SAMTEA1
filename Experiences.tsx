@@ -4,6 +4,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// ИСПРАВЛЕНО: пути к изображениям.
+// Файлы exp-*.jpg должны лежать в public/assets/ (не в корне репозитория).
 const experiences = [
   {
     number: '01',
@@ -35,7 +37,12 @@ export default function Experiences() {
   const sectionRef = useRef<HTMLElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const imagesRef = useRef<(HTMLDivElement | null)[]>([]);
+  // ИСПРАВЛЕНО: в оригинале один и тот же ref (imagesRef[i]) присваивался дважды —
+  // и мобильному <div>, и десктопному <div> в одной итерации.
+  // GSAP получал ссылку только на последний из них, анимация первого не работала.
+  // Решение: разделяем на два независимых массива рефов.
+  const mobileImagesRef = useRef<(HTMLDivElement | null)[]>([]);
+  const desktopImagesRef = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     const mm = gsap.matchMedia();
@@ -74,8 +81,8 @@ export default function Experiences() {
       );
     });
 
-    // Image clip-path reveal
-    imagesRef.current.forEach((img) => {
+    // Image clip-path reveal — теперь анимируем оба массива
+    [...mobileImagesRef.current, ...desktopImagesRef.current].forEach((img) => {
       if (!img) return;
       gsap.fromTo(
         img,
@@ -105,10 +112,7 @@ export default function Experiences() {
       <div className="section-container">
         <div className="flex flex-col md:flex-row gap-12 md:gap-8">
           {/* Sticky Sidebar */}
-          <div
-            ref={sidebarRef}
-            className="md:w-[30%] md:shrink-0"
-          >
+          <div ref={sidebarRef} className="md:w-[30%] md:shrink-0">
             <span
               className="font-mono-label block mb-4"
               style={{ color: '#6B7B6E' }}
@@ -142,8 +146,9 @@ export default function Experiences() {
                 ref={(el) => { cardsRef.current[i] = el; }}
                 className="group"
               >
+                {/* Mobile image */}
                 <div className="overflow-hidden rounded-sm mb-6 md:hidden">
-                  <div ref={(el) => { imagesRef.current[i] = el; }}>
+                  <div ref={(el) => { mobileImagesRef.current[i] = el; }}>
                     <img
                       src={exp.image}
                       alt={exp.title}
@@ -153,8 +158,9 @@ export default function Experiences() {
                   </div>
                 </div>
 
+                {/* Desktop image */}
                 <div className="overflow-hidden rounded-sm mb-6 hidden md:block">
-                  <div ref={(el) => { imagesRef.current[i] = el; }}>
+                  <div ref={(el) => { desktopImagesRef.current[i] = el; }}>
                     <img
                       src={exp.image}
                       alt={exp.title}
@@ -196,6 +202,7 @@ export default function Experiences() {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    aria-hidden="true"
                   >
                     <line x1="5" y1="12" x2="19" y2="12" />
                     <polyline points="12 5 19 12 12 19" />

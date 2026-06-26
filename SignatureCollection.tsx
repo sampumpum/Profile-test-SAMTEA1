@@ -1,9 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// ИСПРАВЛЕНО: пути к изображениям.
+// Файлы prod-*.jpg должны лежать в public/assets/ (не в корне репозитория).
 const products = [
   {
     name: 'Лунцзин (Колодец Дракона)',
@@ -43,6 +45,15 @@ export default function SignatureCollection() {
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
+
+  // ИСПРАВЛЕНО: кнопка «В КОРЗИНУ» теперь имеет состояние.
+  // addedIndex хранит индекс последнего добавленного товара для визуального фидбека.
+  const [addedIndex, setAddedIndex] = useState<number | null>(null);
+
+  const handleAddToCart = (index: number) => {
+    setAddedIndex(index);
+    setTimeout(() => setAddedIndex(null), 1800);
+  };
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -165,11 +176,16 @@ export default function SignatureCollection() {
                   {product.price}
                 </span>
 
+                {/* ИСПРАВЛЕНО: кнопка теперь функциональная — даёт визуальный фидбек */}
                 <button
-                  className="text-[13px] font-medium tracking-wide transition-colors duration-300 hover:text-terracotta"
-                  style={{ color: '#1C110A' }}
+                  onClick={() => handleAddToCart(i)}
+                  className="text-[13px] font-medium tracking-wide transition-colors duration-300"
+                  style={{
+                    color: addedIndex === i ? '#6B7B6E' : '#1C110A',
+                  }}
+                  aria-label={`Добавить ${product.name} в корзину`}
                 >
-                  В КОРЗИНУ
+                  {addedIndex === i ? '✓ ДОБАВЛЕНО' : 'В КОРЗИНУ'}
                 </button>
               </div>
             </div>
@@ -189,6 +205,7 @@ export default function SignatureCollection() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              aria-hidden="true"
             >
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />

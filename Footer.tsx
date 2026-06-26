@@ -19,11 +19,13 @@ export default function Footer({ lenisRef }: FooterProps) {
   const footerRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [email, setEmail] = useState('');
+  // ИСПРАВЛЕНО: добавлено состояние для фидбека после подписки
+  const [subscribed, setSubscribed] = useState(false);
+  const [emailError, setEmailError] = useState('');
 
   useEffect(() => {
     const ctx = gsap.context(() => {
       if (!contentRef.current) return;
-
       const children = contentRef.current.children;
       gsap.fromTo(
         children,
@@ -52,6 +54,27 @@ export default function Footer({ lenisRef }: FooterProps) {
     }
   };
 
+  // ИСПРАВЛЕНО: кнопка отправки формы теперь имеет обработчик с валидацией
+  const handleSubscribe = () => {
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setEmailError('Введите email');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setEmailError('Некорректный email');
+      return;
+    }
+    setEmailError('');
+    setSubscribed(true);
+    setEmail('');
+    // Здесь можно подключить реальный API (Mailchimp, Unisender и т.д.)
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleSubscribe();
+  };
+
   return (
     <footer
       ref={footerRef}
@@ -78,22 +101,13 @@ export default function Footer({ lenisRef }: FooterProps) {
 
             {/* Contact Details */}
             <div className="flex flex-col gap-2 mb-10">
-              <span
-                className="font-mono text-sm"
-                style={{ color: 'rgba(249,245,239,0.8)' }}
-              >
+              <span className="font-mono text-sm" style={{ color: 'rgba(249,245,239,0.8)' }}>
                 +7 (495) 123-45-67
               </span>
-              <span
-                className="font-mono text-sm"
-                style={{ color: 'rgba(249,245,239,0.8)' }}
-              >
+              <span className="font-mono text-sm" style={{ color: 'rgba(249,245,239,0.8)' }}>
                 hello@samtea.ru
               </span>
-              <span
-                className="font-mono text-sm"
-                style={{ color: 'rgba(249,245,239,0.8)' }}
-              >
+              <span className="font-mono text-sm" style={{ color: 'rgba(249,245,239,0.8)' }}>
                 Москва, ул. Мясницкая, 24
               </span>
             </div>
@@ -107,16 +121,10 @@ export default function Footer({ lenisRef }: FooterProps) {
                 ЧАСЫ РАБОТЫ
               </span>
               <div className="flex flex-col gap-1">
-                <span
-                  className="font-mono text-sm"
-                  style={{ color: 'rgba(249,245,239,0.8)' }}
-                >
+                <span className="font-mono text-sm" style={{ color: 'rgba(249,245,239,0.8)' }}>
                   Пн–Пт: 10:00 – 22:00
                 </span>
-                <span
-                  className="font-mono text-sm"
-                  style={{ color: 'rgba(249,245,239,0.8)' }}
-                >
+                <span className="font-mono text-sm" style={{ color: 'rgba(249,245,239,0.8)' }}>
                   Сб–Вс: 11:00 – 23:00
                 </span>
               </div>
@@ -147,44 +155,69 @@ export default function Footer({ lenisRef }: FooterProps) {
               >
                 ПОДПИШИТЕСЬ НА НОВОСТИ
               </span>
-              <div className="relative">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Ваш email"
-                  className="w-full bg-transparent pb-2 text-sm font-sans outline-none transition-colors duration-300"
-                  style={{
-                    color: '#F9F5EF',
-                    borderBottom: '1px solid rgba(249,245,239,0.3)',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderBottomColor = 'rgba(249,245,239,0.8)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderBottomColor = 'rgba(249,245,239,0.3)';
-                  }}
-                />
-                <button
-                  className="absolute right-0 bottom-2 transition-colors duration-300 hover:text-terracotta"
-                  style={{ color: '#F9F5EF' }}
-                  aria-label="Subscribe"
-                >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                    <polyline points="12 5 19 12 12 19" />
-                  </svg>
-                </button>
-              </div>
+
+              {subscribed ? (
+                // Состояние после успешной подписки
+                <p className="text-sm font-mono" style={{ color: 'rgba(249,245,239,0.8)' }}>
+                  ✓ Вы подписаны. Спасибо!
+                </p>
+              ) : (
+                <div>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (emailError) setEmailError('');
+                      }}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Ваш email"
+                      aria-label="Email для подписки на новости"
+                      className="w-full bg-transparent pb-2 text-sm font-sans outline-none transition-colors duration-300"
+                      style={{
+                        color: '#F9F5EF',
+                        borderBottom: `1px solid ${emailError ? '#C4723F' : 'rgba(249,245,239,0.3)'}`,
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderBottomColor = 'rgba(249,245,239,0.8)';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderBottomColor = emailError
+                          ? '#C4723F'
+                          : 'rgba(249,245,239,0.3)';
+                      }}
+                    />
+                    {/* ИСПРАВЛЕНО: кнопка отправки теперь функциональная */}
+                    <button
+                      onClick={handleSubscribe}
+                      className="absolute right-0 bottom-2 transition-colors duration-300 hover:text-terracotta"
+                      style={{ color: '#F9F5EF' }}
+                      aria-label="Подписаться"
+                    >
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                      </svg>
+                    </button>
+                  </div>
+                  {emailError && (
+                    <p className="mt-1 text-xs font-mono" style={{ color: '#C4723F' }}>
+                      {emailError}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -194,11 +227,9 @@ export default function Footer({ lenisRef }: FooterProps) {
           className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6"
           style={{ borderTop: '1px solid rgba(232,226,217,0.2)' }}
         >
-          <span
-            className="font-mono text-xs"
-            style={{ color: 'rgba(249,245,239,0.4)' }}
-          >
-            © 2025 SAM TEA. Все права защищены.
+          {/* ИСПРАВЛЕНО: год исправлен с 2025 на 2026 */}
+          <span className="font-mono text-xs" style={{ color: 'rgba(249,245,239,0.4)' }}>
+            © 2026 SAM TEA. Все права защищены.
           </span>
           <div className="flex items-center gap-4">
             <a
@@ -209,9 +240,11 @@ export default function Footer({ lenisRef }: FooterProps) {
               INSTAGRAM
             </a>
             <a
-              href="#"
+              href="https://t.me/sam_true_sam"
               className="font-mono text-xs transition-colors duration-300 hover:text-warm-cream"
               style={{ color: 'rgba(249,245,239,0.4)' }}
+              target="_blank"
+              rel="noopener noreferrer"
             >
               TELEGRAM
             </a>

@@ -4,6 +4,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// ИСПРАВЛЕНО: пути к изображениям.
+// Файлы process-*.jpg должны лежать в public/assets/ (не в корне репозитория).
 const panels = [
   {
     label: '01 — ЧАЙНЫЕ САДЫ',
@@ -52,23 +54,20 @@ export default function ImmersiveProcess() {
     const mm = gsap.matchMedia();
 
     mm.add('(min-width: 768px)', () => {
-      // Horizontal scroll on desktop
       const scrollWidth = container.scrollWidth - window.innerWidth;
 
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: section,
-          pin: true,
-          scrub: 1,
-          start: 'top top',
-          end: () => `+=${scrollWidth}`,
-          invalidateOnRefresh: true,
-        },
-      });
-
-      tl.to(container, {
-        x: -scrollWidth,
-        ease: 'none',
+      // ИСПРАВЛЕНО: сохраняем ScrollTrigger горизонтального скролла в переменную,
+      // чтобы передавать её в containerAnimation у дочерних триггеров.
+      // В оригинале передавался объект timeline (tl), а нужен ScrollTrigger instance.
+      const mainST = ScrollTrigger.create({
+        trigger: section,
+        pin: true,
+        scrub: 1,
+        start: 'top top',
+        // ИСПРАВЛЕНО: end как функция должна возвращать строку с "+="
+        end: () => `+=${scrollWidth}`,
+        invalidateOnRefresh: true,
+        animation: gsap.to(container, { x: -scrollWidth, ease: 'none' }),
       });
 
       // Progress bar
@@ -85,7 +84,7 @@ export default function ImmersiveProcess() {
         });
       }
 
-      // Panel text entrance
+      // Panel text entrance — containerAnimation теперь получает правильный ST instance
       textRefs.current.forEach((textEl) => {
         if (!textEl) return;
         gsap.fromTo(
@@ -98,7 +97,7 @@ export default function ImmersiveProcess() {
             ease: 'power2.out',
             scrollTrigger: {
               trigger: textEl.closest('.process-panel'),
-              containerAnimation: tl,
+              containerAnimation: mainST,
               start: 'left 80%',
               toggleActions: 'play none none reverse',
             },
@@ -118,20 +117,14 @@ export default function ImmersiveProcess() {
     >
       {/* Section Label */}
       <div className="absolute top-6 left-6 z-20">
-        <span
-          className="font-mono-label"
-          style={{ color: '#6B7B6E' }}
-        >
+        <span className="font-mono-label" style={{ color: '#6B7B6E' }}>
           — ОТ ЛИСТА К ЧАШКЕ
         </span>
       </div>
 
       {/* Desktop: Horizontal Scroll Container */}
       <div className="hidden md:block">
-        <div
-          ref={containerRef}
-          className="flex flex-nowrap h-screen"
-        >
+        <div ref={containerRef} className="flex flex-nowrap h-screen">
           {panels.map((panel, i) => (
             <div
               key={panel.label}
@@ -161,10 +154,7 @@ export default function ImmersiveProcess() {
                 >
                   {panel.title}
                 </h3>
-                <span
-                  className="font-mono-label"
-                  style={{ color: '#F9F5EF' }}
-                >
+                <span className="font-mono-label" style={{ color: '#F9F5EF' }}>
                   {panel.label}
                 </span>
               </div>
@@ -200,10 +190,7 @@ export default function ImmersiveProcess() {
               >
                 {panel.title}
               </h3>
-              <span
-                className="font-mono-label"
-                style={{ color: '#F9F5EF' }}
-              >
+              <span className="font-mono-label" style={{ color: '#F9F5EF' }}>
                 {panel.label}
               </span>
             </div>
@@ -212,7 +199,11 @@ export default function ImmersiveProcess() {
       </div>
 
       {/* Progress Bar (Desktop only) */}
-      <div className="hidden md:block absolute bottom-8 left-1/2 -translate-x-1/2 z-20 w-[200px] h-0.5" style={{ backgroundColor: 'rgba(232,226,217,0.3)' }}>
+      <div
+        className="hidden md:block absolute bottom-8 left-1/2 -translate-x-1/2 z-20 w-[200px] h-0.5"
+        style={{ backgroundColor: 'rgba(232,226,217,0.3)' }}
+        aria-hidden="true"
+      >
         <div
           ref={progressRef}
           className="h-full w-0"

@@ -5,6 +5,11 @@ interface HeroProps {
   lenisRef: React.MutableRefObject<any>;
 }
 
+// Текст заголовка разбиваем заранее в JSX — React управляет DOM,
+// GSAP только анимирует уже существующие элементы.
+// Это устраняет баг дублирования букв в React StrictMode.
+const HEADING = 'Сам Чай';
+
 export default function Hero({ lenisRef }: HeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -28,26 +33,14 @@ export default function Hero({ lenisRef }: HeroProps) {
       0.3
     );
 
-    // Heading character reveal
+    // Анимация символов заголовка через querySelectorAll — React уже вставил их в DOM,
+    // мы только анимируем, не трогая innerHTML
     if (headingRef.current) {
-      const text = headingRef.current.textContent || '';
-      headingRef.current.innerHTML = '';
-      const chars = text.split('').map((char) => {
-        const span = document.createElement('span');
-        span.textContent = char === ' ' ? '\u00A0' : char;
-        span.style.display = 'inline-block';
-        span.style.opacity = '0';
-        headingRef.current!.appendChild(span);
-        return span;
-      });
-
-      tl.to(
+      const chars = headingRef.current.querySelectorAll<HTMLSpanElement>('.char');
+      tl.fromTo(
         chars,
-        {
-          opacity: 1,
-          duration: 0.04,
-          stagger: 0.02,
-        },
+        { opacity: 0, y: 12 },
+        { opacity: 1, y: 0, duration: 0.04, stagger: 0.03 },
         0.5
       );
     }
@@ -93,7 +86,9 @@ export default function Hero({ lenisRef }: HeroProps) {
       id="hero"
       className="relative w-full h-screen overflow-hidden"
     >
-      {/* Background Video */}
+      {/* Background Video
+          Путь исправлен: файлы должны лежать в public/assets/
+          (hero-video.mp4, process-brewing.jpg) */}
       <video
         ref={videoRef}
         autoPlay
@@ -126,12 +121,24 @@ export default function Hero({ lenisRef }: HeroProps) {
             — ШОУ-РУМ ЧАЯ
           </span>
 
+          {/* Заголовок с символами, подготовленными в JSX.
+              opacity: 0 задаётся инлайном — GSAP анимирует их в useEffect */}
           <h1
             ref={headingRef}
             className="font-display text-[52px] md:text-[100px] font-normal leading-[1.1em] tracking-[-0.03em] mb-6"
             style={{ color: '#F9F5EF' }}
+            aria-label={HEADING}
           >
-            Сам Чай
+            {HEADING.split('').map((char, i) => (
+              <span
+                key={i}
+                className="char"
+                style={{ display: 'inline-block', opacity: 0 }}
+                aria-hidden="true"
+              >
+                {char === ' ' ? '\u00A0' : char}
+              </span>
+            ))}
           </h1>
 
           <p
@@ -154,6 +161,7 @@ export default function Hero({ lenisRef }: HeroProps) {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              aria-hidden="true"
             >
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />
@@ -166,11 +174,9 @@ export default function Hero({ lenisRef }: HeroProps) {
       <div
         ref={scrollIndicatorRef}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:block animate-scroll-pulse"
+        aria-hidden="true"
       >
-        <div
-          className="w-px h-10"
-          style={{ backgroundColor: '#F9F5EF' }}
-        />
+        <div className="w-px h-10" style={{ backgroundColor: '#F9F5EF' }} />
       </div>
     </section>
   );
